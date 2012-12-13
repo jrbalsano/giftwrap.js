@@ -1,7 +1,7 @@
-window.FSJSON = {}
-class FSJSON.FsJsonObject
+window.GW = {}
+class GW.Present
   ###
-  # Creates a new FsJsonObject, accepting an options hash.
+  # Creates a new Present, accepting an options hash.
   # 
   # Parameters:
   #   size: the number of bytes to request via the FileSystem API. Defaults to

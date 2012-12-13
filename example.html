@@ -4,7 +4,7 @@
     <title>JSON to FileSystem and Back Again</title>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script> 
     <script type="text/javascript" src="https://raw.github.com/padolsey/prettyPrint.js/master/prettyprint.js"></script>
-    <script type="text/javascript" src="fs.js"></script>
+    <script type="text/javascript" src="giftwrap.js"></script>
     <script type="text/javascript">
       var jsonObject = {
         letters: ["a", "b", "c", "d", "e", "f", "g"],
@@ -15,7 +15,7 @@
       };
       $(document).ready(function() {
         $(".existing-json").html(prettyPrint(jsonObject));
-        new FSJSON.FsJsonObject({persistent: true, onReady: function(jsonIo) {
+        new GW.Present({persistent: true, onReady: function(jsonIo) {
           jsonIo.writeObject(jsonObject, function () {
             jsonIo.readObject(function() {
               $(".read-json").html(prettyPrint(jsonIo.getObject()));
