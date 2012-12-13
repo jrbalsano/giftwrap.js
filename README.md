@@ -57,5 +57,5 @@ And that's pretty much it. You're good to go!
 
 ## Collaborators ##
 
-GiftWrap was part of the work [Jonathan Balsano][http://github.com/jrbalsano]
+GiftWrap was part of the work [Jonathan Balsano](http://github.com/jrbalsano)
 did for a project in UI Design.
