@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <title>JSON to FileSystem and Back Again</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script> 
+    <script type="text/javascript" src="https://raw.github.com/padolsey/prettyPrint.js/master/prettyprint.js"></script>
+    <script type="text/javascript" src="fs.js"></script>
+    <script type="text/javascript">
+      var jsonObject = {
+        letters: ["a", "b", "c", "d", "e", "f", "g"],
+        numbers: {
+          integer: 1235,
+          decimal: 50.4
+        }
+      };
+      $(document).ready(function() {
+        $(".existing-json").html(prettyPrint(jsonObject));
+        new FSJSON.FsJsonObject({persistent: true, onReady: function(jsonIo) {
+          jsonIo.writeObject(jsonObject, function () {
+            jsonIo.readObject(function() {
+              $(".read-json").html(prettyPrint(jsonIo.getObject()));
+              });
+            });
+          }});
+        });
+    </script>
+  </head>
+  <body>
+    <h1>FileSystem to JSON example usage</h1>
+    <h2>Object to be written to filesystem</h2>
+    <div class="existing-json"></div>
+    <h2>Object read from filesystem</h2>
+    <div class="read-json"></div>
+  </body>
+</html>

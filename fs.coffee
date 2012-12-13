@@ -1,4 +1,4 @@
-FSJSON = {}
+window.FSJSON = {}
 class FSJSON.FsJsonObject
   ###
   # Creates a new FsJsonObject, accepting an options hash.
@@ -23,12 +23,15 @@ class FSJSON.FsJsonObject
     options.errorCallback = if options.errorCallback? then options.errorCallback else @_on_error
     @_jsonObject = {}
     @options = options
+    @retryRequest()
 
   retryRequest: ->
     window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem
     onQuotaReady = (grantedBytes) =>
-      window.requestFileSystem window.PERSISTENT, grantedBytes, @_onGranted, @options.errorCallback
-    if options.persistent == "PERSISTENT"
+      window.requestFileSystem window[@options.persistent], grantedBytes, ((fs) =>
+        @_onGranted(fs)
+      ), @options.errorCallback
+    if @options.persistent == "PERSISTENT"
       window.webkitStorageInfo.requestQuota window.PERSISTENT, @options.size, onQuotaReady, @options.errorCallback
     else
       onQuotaReady(@options.size)
@@ -37,9 +40,9 @@ class FSJSON.FsJsonObject
     @_jsonObject || {}
 
   writeObject: (object, successCallback) ->
-    if @fs
+    if @fs?
       @_jsonObject = if object? then object else @_jsonObject
-      successCallback = successCallback || ->
+      successCallback = if successCallback? then successCallback else ->
 
       fileWriterHandler = (fileWriter) =>
         json_string = JSON.stringify(@_jsonObject)
@@ -50,7 +53,7 @@ class FSJSON.FsJsonObject
       fileEntryHandler = (fileEntry) =>
         fileEntry.createWriter fileWriterHandler, @_onError
 
-      @fs.root.getFile @options.fileName, {create: false}, (fe) =>
+      @fs.root.getFile @options.fileName, {create: true}, (fe) =>
         fe.remove =>
           @fs.root.getFile @options.fileName, {create: true}, fileEntryHandler, @_onError
         , @_onError
@@ -65,11 +68,16 @@ class FSJSON.FsJsonObject
       reader.onloadend = (e) =>
         if JSON then @_jsonObject = JSON.parse(e.target.result) else console.log "JSON parsing not supported"
         successCallback(e)
+      reader.readAsText(file)
 
     fileEntryHandler = (fileEntry) =>
       fileEntry.file fileHandler, @_onError
 
     @fs.root.getFile @options.fileName, {create: true}, fileEntryHandler, @onError
+
+  _onGranted: (fs) ->
+    @fs = fs
+    @options.onReady @
 
   _onError: (e) ->
     switch e.code
