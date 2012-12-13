@@ -1,4 +1,5 @@
-class LOAF.FsJsonObject
+FSJSON = {}
+class FSJSON.FsJsonObject
   ###
   # Creates a new FsJsonObject, accepting an options hash.
   # 
