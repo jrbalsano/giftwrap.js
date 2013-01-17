@@ -17,16 +17,10 @@
         $(".existing-json").html(prettyPrint(jsonObject));
         new GW.Present({persistent: true, onReady: function(jsonIo) {
           jsonIo.writeObject(jsonObject, function () {
-            console.log("0");
             jsonIo.readObject(function() {
               $(".read-json").html(prettyPrint(jsonIo.getObject()));
               });
             });
-          jsonIo.writeObject({a: [1,2,3,4]}, function() { console.log("1"); });
-          jsonIo.writeObject({a: [2,3,4,5]}, function() { console.log("2"); });
-          jsonIo.writeObject({a: [3,4,5,6]}, function() { console.log("3"); });
-          jsonIo.writeObject({a: [4,5,6,7]}, function() { console.log("4"); });
-          jsonIo.writeObject({a: [5,6,7,8]}, function() { console.log("5"); });
         }});
       });
     </script>
