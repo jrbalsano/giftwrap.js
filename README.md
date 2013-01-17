@@ -55,6 +55,14 @@ myPresent.readObject(function() {
 
 And that's pretty much it. You're good to go!
 
+## FileSystem Lock ##
+
+One last thing - gitwrap.js implements locking functionality that is not
+included in the FileSystem API. Specifically, giftwrap.js will prevent
+concurrent read/writes from occuring in the same file. This means you'll never
+have to worry about pesky race conditions or concurrent access problems while
+using giftwrap.js.
+
 ## Collaborators ##
 
 GiftWrap was part of the work [Jonathan Balsano](http://github.com/jrbalsano)
