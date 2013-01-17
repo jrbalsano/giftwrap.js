@@ -13,7 +13,7 @@
     setInterval(function() {
       var fnCallback, fnObj;
       if (!wait) {
-        fnObj = GW.fileQueue[filename].pop();
+        fnObj = GW.fileQueue[filename].shift();
         if (fnObj != null) {
           wait = true;
           fnCallback = fnObj.params[fnObj.cbIndex];

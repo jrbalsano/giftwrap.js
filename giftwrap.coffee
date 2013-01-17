@@ -5,7 +5,7 @@ GW.Thread = (filename) ->
   wait = false
   setInterval ->
     if !wait
-      fnObj = GW.fileQueue[filename].pop()
+      fnObj = GW.fileQueue[filename].shift()
       if fnObj?
         wait = true
         fnCallback = fnObj.params[fnObj.cbIndex]
