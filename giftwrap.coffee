@@ -1,4 +1,21 @@
 window.GW = {}
+GW.fileThreads = {}
+GW.fileQueue = {}
+GW.Thread = (filename) ->
+  wait = false
+  setInterval ->
+    if !wait
+      fnObj = GW.fileQueue[filename].shift()
+      if fnObj?
+        wait = true
+        fnCallback = fnObj.params[fnObj.cbIndex]
+        fnObj.params[fnObj.cbIndex] = ->
+          wait = false
+          fnCallback.apply @, arguments
+        fnObj.fn.apply fnObj.context, fnObj.params
+  , 0
+  null
+
 class GW.Present
   ###
   # Creates a new Present, accepting an options hash.
@@ -16,11 +33,17 @@ class GW.Present
   ###
   constructor: (options) ->
     options = options || {}
-    options.size = if options.size? then options.size else 5 * 1024 * 1024 
+    options.size = if options.size? then options.size else 5 * 1024 * 1024
     options.fileName = if options.fileName? then options.fileName else "object.json"
     options.onReady = if options.onReady? then options.onReady else ->
     options.persistent = if options.persistent then "PERSISTENT" else "TEMPORARY"
     options.errorCallback = if options.errorCallback? then options.errorCallback else @_on_error
+
+    unless GW.fileThreads[options.fileName]?
+      GW.Thread options.fileName
+      GW.fileThreads[options.fileName] = true
+    unless GW.fileQueue[options.fileName]?
+      GW.fileQueue[options.fileName] = []
     @_jsonObject = {}
     @options = options
     @retryRequest()
@@ -40,6 +63,20 @@ class GW.Present
     @_jsonObject || {}
 
   writeObject: (object, successCallback) ->
+    GW.fileQueue[@options.fileName].push
+      params: [object, successCallback]
+      cbIndex: 1
+      context: @
+      fn: @_writeObject
+
+  readObject: (successCallback) ->
+    GW.fileQueue[@options.fileName].push
+      params: [successCallback]
+      cbIndex: 0
+      context: @
+      fn: @_readObject
+
+  _writeObject: (object, successCallback) ->
     if @fs?
       @_jsonObject = if object? then object else @_jsonObject
       successCallback = if successCallback? then successCallback else ->
@@ -61,7 +98,7 @@ class GW.Present
     else
       console.log "No filesystem space has been obtained for this object."
 
-  readObject: (successCallback) ->
+  _readObject: (successCallback) ->
     result = {}
     fileHandler = (file) =>
       reader = new FileReader()
