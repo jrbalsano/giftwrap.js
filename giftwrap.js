@@ -3,6 +3,31 @@
 
   window.GW = {};
 
+  GW.fileThreads = {};
+
+  GW.fileQueue = {};
+
+  GW.Thread = function(filename) {
+    var wait;
+    wait = false;
+    setInterval(function() {
+      var fnCallback, fnObj;
+      if (!wait) {
+        fnObj = GW.fileQueue[filename].shift();
+        if (fnObj != null) {
+          wait = true;
+          fnCallback = fnObj.params[fnObj.cbIndex];
+          fnObj.params[fnObj.cbIndex] = function() {
+            wait = false;
+            return fnCallback.apply(this, arguments);
+          };
+          return fnObj.fn.apply(fnObj.context, fnObj.params);
+        }
+      }
+    }, 0);
+    return null;
+  };
+
   GW.Present = (function() {
     /*
       # Creates a new Present, accepting an options hash.
@@ -26,6 +51,13 @@
       options.onReady = options.onReady != null ? options.onReady : function() {};
       options.persistent = options.persistent ? "PERSISTENT" : "TEMPORARY";
       options.errorCallback = options.errorCallback != null ? options.errorCallback : this._on_error;
+      if (GW.fileThreads[options.fileName] == null) {
+        GW.Thread(options.fileName);
+        GW.fileThreads[options.fileName] = true;
+      }
+      if (GW.fileQueue[options.fileName] == null) {
+        GW.fileQueue[options.fileName] = [];
+      }
       this._jsonObject = {};
       this.options = options;
       this.retryRequest();
@@ -52,6 +84,24 @@
     };
 
     Present.prototype.writeObject = function(object, successCallback) {
+      return GW.fileQueue[this.options.fileName].push({
+        params: [object, successCallback],
+        cbIndex: 1,
+        context: this,
+        fn: this._writeObject
+      });
+    };
+
+    Present.prototype.readObject = function(successCallback) {
+      return GW.fileQueue[this.options.fileName].push({
+        params: [successCallback],
+        cbIndex: 0,
+        context: this,
+        fn: this._readObject
+      });
+    };
+
+    Present.prototype._writeObject = function(object, successCallback) {
       var fileEntryHandler, fileWriterHandler,
         _this = this;
       if (this.fs != null) {
@@ -81,7 +131,7 @@
       }
     };
 
-    Present.prototype.readObject = function(successCallback) {
+    Present.prototype._readObject = function(successCallback) {
       var fileEntryHandler, fileHandler, result,
         _this = this;
       result = {};
