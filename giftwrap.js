@@ -5,29 +5,27 @@
 
   GW.fileThreads = {};
 
+  GW.fileQueue = {};
+
   GW.Thread = function(filename) {
-    var fn, fnObj, wait, _results;
+    var wait;
     wait = false;
-    _results = [];
-    while (true) {
+    setInterval(function() {
+      var fnCallback, fnObj;
       if (!wait) {
-        fnObj = GW.fileThreads[filename].pop();
+        fnObj = GW.fileQueue[filename].pop();
         if (fnObj != null) {
           wait = true;
-          fn = fbObj.params[fnObj.cbIndex];
+          fnCallback = fnObj.params[fnObj.cbIndex];
           fnObj.params[fnObj.cbIndex] = function() {
             wait = false;
-            return fnObj.params[fnObj.cbIndex].call(this, arguments);
+            return fnCallback.apply(this, arguments);
           };
-          _results.push(fnObj.fn.call(fnObj.context, fnObj.params));
-        } else {
-          _results.push(void 0);
+          return fnObj.fn.apply(fnObj.context, fnObj.params);
         }
-      } else {
-        _results.push(void 0);
       }
-    }
-    return _results;
+    }, 0);
+    return null;
   };
 
   GW.Present = (function() {
@@ -54,9 +52,11 @@
       options.persistent = options.persistent ? "PERSISTENT" : "TEMPORARY";
       options.errorCallback = options.errorCallback != null ? options.errorCallback : this._on_error;
       if (GW.fileThreads[options.fileName] == null) {
-        GW.fileThreads[options.fileName] = setTimeout(function() {
-          return GW.Thread(options.fileName);
-        }, 0);
+        GW.Thread(options.fileName);
+        GW.fileThreads[options.fileName] = true;
+      }
+      if (GW.fileQueue[options.fileName] == null) {
+        GW.fileQueue[options.fileName] = [];
       }
       this._jsonObject = {};
       this.options = options;
@@ -84,6 +84,24 @@
     };
 
     Present.prototype.writeObject = function(object, successCallback) {
+      return GW.fileQueue[this.options.fileName].push({
+        params: [object, successCallback],
+        cbIndex: 1,
+        context: this,
+        fn: this._writeObject
+      });
+    };
+
+    Present.prototype.readObject = function(successCallback) {
+      return GW.fileQueue[this.options.fileName].push({
+        params: [successCallback],
+        cbIndex: 0,
+        context: this,
+        fn: this._readObject
+      });
+    };
+
+    Present.prototype._writeObject = function(object, successCallback) {
       var fileEntryHandler, fileWriterHandler,
         _this = this;
       if (this.fs != null) {
@@ -113,7 +131,7 @@
       }
     };
 
-    Present.prototype.readObject = function(successCallback) {
+    Present.prototype._readObject = function(successCallback) {
       var fileEntryHandler, fileHandler, result,
         _this = this;
       result = {};
