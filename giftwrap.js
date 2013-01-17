@@ -3,6 +3,33 @@
 
   window.GW = {};
 
+  GW.fileThreads = {};
+
+  GW.Thread = function(filename) {
+    var fn, fnObj, wait, _results;
+    wait = false;
+    _results = [];
+    while (true) {
+      if (!wait) {
+        fnObj = GW.fileThreads[filename].pop();
+        if (fnObj != null) {
+          wait = true;
+          fn = fbObj.params[fnObj.cbIndex];
+          fnObj.params[fnObj.cbIndex] = function() {
+            wait = false;
+            return fnObj.params[fnObj.cbIndex].call(this, arguments);
+          };
+          _results.push(fnObj.fn.call(fnObj.context, fnObj.params));
+        } else {
+          _results.push(void 0);
+        }
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+
   GW.Present = (function() {
     /*
       # Creates a new Present, accepting an options hash.
@@ -26,6 +53,11 @@
       options.onReady = options.onReady != null ? options.onReady : function() {};
       options.persistent = options.persistent ? "PERSISTENT" : "TEMPORARY";
       options.errorCallback = options.errorCallback != null ? options.errorCallback : this._on_error;
+      if (GW.fileThreads[options.fileName] == null) {
+        GW.fileThreads[options.fileName] = setTimeout(function() {
+          return GW.Thread(options.fileName);
+        }, 0);
+      }
       this._jsonObject = {};
       this.options = options;
       this.retryRequest();

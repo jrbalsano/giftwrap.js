@@ -1,4 +1,18 @@
 window.GW = {}
+GW.fileThreads = {}
+GW.Thread = (filename) ->
+  wait = false
+  while true
+    if !wait
+      fnObj = GW.fileThreads[filename].pop()
+      if fnObj?
+        wait = true
+        fn = fbObj.params[fnObj.cbIndex]
+        fnObj.params[fnObj.cbIndex] = ->
+          wait = false
+          fnObj.params[fnObj.cbIndex].call @, arguments
+        fnObj.fn.call fnObj.context, fnObj.params
+
 class GW.Present
   ###
   # Creates a new Present, accepting an options hash.
@@ -16,11 +30,16 @@ class GW.Present
   ###
   constructor: (options) ->
     options = options || {}
-    options.size = if options.size? then options.size else 5 * 1024 * 1024 
+    options.size = if options.size? then options.size else 5 * 1024 * 1024
     options.fileName = if options.fileName? then options.fileName else "object.json"
     options.onReady = if options.onReady? then options.onReady else ->
     options.persistent = if options.persistent then "PERSISTENT" else "TEMPORARY"
     options.errorCallback = if options.errorCallback? then options.errorCallback else @_on_error
+
+    unless GW.fileThreads[options.fileName]?
+      GW.fileThreads[options.fileName] = setTimeout ->
+        GW.Thread options.fileName
+      , 0
     @_jsonObject = {}
     @options = options
     @retryRequest()
